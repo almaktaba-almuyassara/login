@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>الدخول إلى المكتبة الميسرة</title>
+<style>
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f5f1ee;color:#222;display:flex;min-height:100vh;align-items:center;justify-content:center}
+.box{background:#fff;border:1px solid #e3dccf;border-radius:16px;padding:26px 22px;max-width:360px;width:90%;text-align:center;box-shadow:0 4px 18px rgba(0,0,0,.08)}
+h1{font-size:1.2rem;color:#0e4a31;margin:0 0 8px}p{margin:8px 0;line-height:1.7;font-size:.95rem}
+button{font-family:inherit;font-size:1rem;padding:11px 18px;border-radius:10px;border:0;background:#0e4a31;color:#fff;cursor:pointer;margin-top:10px;width:100%}
+button:disabled{opacity:.6}.err{color:#b3261e}.small{font-size:.8rem;color:#666}a{color:#0e4a31}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>المكتبة الميسرة</h1>
+<p id="msg">سجّل الدخول بحساب Google لحفظ كتبك وصوتياتك ومرئياتك المفضلة. المحتوى مفتوح للجميع بدون دخول.</p>
+<button id="go" type="button">الدخول بحساب Google</button>
+<p class="small">نحفظ فقط اسمك وصورتك وما تحفظه من عناصر. <a href="privacy.html">سياسة الخصوصية</a></p>
+</div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+const cfg={apiKey:"AIzaSyAScRvcuU7NXGdrst14wUoizScrBbSdu6U",authDomain:"almaktaba-almuyassara.firebaseapp.com",projectId:"almaktaba-almuyassara",storageBucket:"almaktaba-almuyassara.firebasestorage.app",messagingSenderId:"84580412050",appId:"1:84580412050:web:18658c6d94f583c7c8944b"};
+const app=initializeApp(cfg),auth=getAuth(app);
+const $=id=>document.getElementById(id),msg=$("msg"),go=$("go");
+const OK=/^https:\/\/\d+-atari-embeds\.googleusercontent\.com$/;
+const o=new URLSearchParams(location.search).get("o")||"";
+const target=(OK.test(o)||o==="http://localhost:8765")?o:"";
+function say(t,e){msg.textContent=t;msg.className=e?"err":""}
+async function send(u){
+  if(!target||!window.opener){say("افتح هذه الصفحة من زر الحساب داخل المكتبة.",true);return}
+  const t=await u.getIdToken();
+  window.opener.postMessage({type:"maktaba-auth",idToken:t,refreshToken:u.refreshToken,uid:u.uid,name:u.displayName||"",photo:u.photoURL||""},target);
+  say("تم الدخول. يمكنك إغلاق هذه النافذة.");setTimeout(()=>window.close(),900);
+}
+window.addEventListener("message",e=>{if(e.origin===target&&e.data&&e.data.type==="maktaba-signout"){signOut(auth).then(()=>{try{e.source.postMessage({type:"maktaba-signedout"},target)}catch(_){};setTimeout(()=>window.close(),300)})}});
+let auto=false;
+onAuthStateChanged(auth,u=>{if(u&&target&&window.opener&&!auto){auto=true;send(u)}});
+go.onclick=async()=>{
+  if(!target||!window.opener){say("افتح هذه الصفحة من زر الحساب داخل المكتبة.",true);return}
+  go.disabled=true;
+  try{const r=await signInWithPopup(auth,new GoogleAuthProvider());auto=true;await send(r.user)}
+  catch(e){say(e&&e.code==="auth/popup-blocked"?"المتصفح منع النافذة. اسمح بالنوافذ المنبثقة وأعد المحاولة.":(e&&e.code==="auth/popup-closed-by-user"?"أُغلقت نافذة الدخول.":"تعذر الدخول. حاول مرة أخرى."),true);go.disabled=false}
+};
+</script>
+</body>
+</html>
