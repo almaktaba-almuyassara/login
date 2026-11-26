@@ -27,7 +27,7 @@ const app=initializeApp(cfg),auth=getAuth(app);
 const $=id=>document.getElementById(id),msg=$("msg"),go=$("go");
 const OK=/^https:\/\/\d+-atari-embeds\.googleusercontent\.com$/;
 const o=new URLSearchParams(location.search).get("o")||"";
-const target=(OK.test(o)||o==="https://mohamednour-jpg.github.io"||o==="http://localhost:8765")?o:"";
+const target=(OK.test(o)||o==="https://almaktaba-almuyassara.github.io"||o==="http://localhost:8765")?o:"";
 function say(t,e){msg.textContent=t;msg.className=e?"err":""}
 async function send(u){
   if(!target||!window.opener){say("افتح هذه الصفحة من زر الحساب داخل المكتبة.",true);return}
