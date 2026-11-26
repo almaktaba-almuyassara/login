@@ -36,12 +36,14 @@ async function send(u){
   say("تم الدخول. يمكنك إغلاق هذه النافذة.");setTimeout(()=>window.close(),900);
 }
 window.addEventListener("message",e=>{if(e.origin===target&&e.data&&e.data.type==="maktaba-signout"){signOut(auth).then(()=>{try{e.source.postMessage({type:"maktaba-signedout"},target)}catch(_){};setTimeout(()=>window.close(),300)})}});
-let auto=false;
-onAuthStateChanged(auth,u=>{if(u&&target&&window.opener&&!auto){auto=true;send(u)}});
+const OUT=new URLSearchParams(location.search).get("out")==="1";
+if(OUT){say("جارٍ تسجيل الخروج...");go.style.display="none";signOut(auth).then(()=>{say("تم تسجيل الخروج.");setTimeout(()=>window.close(),700)}).catch(()=>say("تعذر تسجيل الخروج.",true))}
+let auto=OUT;
+onAuthStateChanged(auth,u=>{if(!OUT&&u&&target&&window.opener&&!auto){auto=true;send(u)}});
 go.onclick=async()=>{
   if(!target||!window.opener){say("افتح هذه الصفحة من زر الحساب داخل المكتبة.",true);return}
   go.disabled=true;
-  try{const r=await signInWithPopup(auth,new GoogleAuthProvider());auto=true;await send(r.user)}
+  try{const r=await signInWithPopup(auth,(()=>{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});return p})());auto=true;await send(r.user)}
   catch(e){say(e&&e.code==="auth/popup-blocked"?"المتصفح منع النافذة. اسمح بالنوافذ المنبثقة وأعد المحاولة.":(e&&e.code==="auth/popup-closed-by-user"?"أُغلقت نافذة الدخول.":"تعذر الدخول. حاول مرة أخرى."),true);go.disabled=false}
 };
 </script>
